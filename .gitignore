@@ -1,0 +1,12 @@
+# Ignore node_modules directory
+node_modules/
+
+# Ignore log files and other generated files
+logs/
+.env
+.DS_Store
+
+# Optionally, ignore your IDE/editor files
+.idea/
+.vscode/
+.vim/

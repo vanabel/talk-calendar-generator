@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Talk Calendar Generator</title>
+    <!-- Include Bootstrap CSS from CDN -->
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap/dist/css/bootstrap.min.css">
+  </head>
+  <body>
+    <h1 class="text-center">Talk Calendar Generator</h1>
+    <form action="/generate-ical" method="POST" class="container" enctype="multipart/form-data">
+      <div class="form-group">
+	<label for="title">Title:</label>
+	<input type="text" name="title" class="form-control" required placeholder="Higgs-de Rham flow and its recent developments">
+      </div>
+
+      <div class="form-group">
+	<label for="speaker">Speaker:</label>
+	<input type="text" name="speaker" class="form-control" required placeholder="盛茂">
+      </div>
+
+      <div class="form-group">
+	<label for="datetime">Date and Time:</label>
+	<input type="datetime-local" name="datetime" class="form-control" required placeholder="2023-10-19T14:30">
+      </div>
+
+      <div class="form-group">
+	<label for="venue">Venue:</label>
+	<input type="text" name="venue" class="form-control" required placeholder="会议室(703)">
+      </div>
+
+      <div class="form-group">
+	<label for="affiliation">Affiliation:</label>
+	<input type="text" name="affiliation" class="form-control" required placeholder="中国科学技术大学">
+      </div>
+
+      <div class="form-group">
+	<label for="host">Host:</label>
+	<input type="text" name="host" class="form-control" required placeholder="胡勇">
+      </div>
+
+      <div class="form-group">
+	<label for="abstract">Abstract:</label>
+	<textarea name="description" class="form-control" required placeholder="This is a survey talk on the theory of Higgs-de Rham flow, its applications, and some recent developments."></textarea>
+      </div>
+
+      <div class="form-group">
+	<label for="remark">Remark:</label>
+	<input type="text" name="remark" class="form-control" placeholder="Some remarks">
+      </div>
+
+      <div class="form-group">
+	<label for="pdfFile">Upload PDF File (if applicable):</label>
+	<input type="file" name="pdfFile" class="form-control-file">
+      </div>
+
+      <button type="submit" class="btn btn-primary mt-4">Generate iCal</button>
+    </form>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap/dist/js/bootstrap.min.js"></script>
+  </body>
+</html>
