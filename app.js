@@ -36,11 +36,8 @@ app.post('/generate-ical', upload.single('pdfFile'), (req, res) => {
   const pdfFile = req.file; // Use req.file to access the uploaded file
 
   // Convert the datetime string to a JavaScript Date object
-  console.log(datetime);
   const date = new Date(datetime);
   date.setTime( date.getTime() - date.getTimezoneOffset()*60*1000 );
-
-  console.log(formatDate(date));
 
   // Create the iCalendar data
   let icsData = `BEGIN:VCALENDAR
