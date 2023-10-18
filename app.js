@@ -9,6 +9,10 @@ const port = config.port;
 
 const app = express();
 
+// Define EJS as the view engine
+app.set('view engine', 'ejs');
+app.set('views', __dirname);
+
 //Define storage for uploaded files and rename them as needed
 const storage = multer.diskStorage({
   destination: function (req, file, cb) {
@@ -27,20 +31,27 @@ app.use(bodyParser.urlencoded({ extended: true }));
 
 // Serve the HTML form page
 app.get('/', (req, res) => {
-  res.sendFile(__dirname + '/form.html');
+  const currentDate = new Date();
+  const defaultEndDate = getEndTime(currentDate);
+  res.render('form', { title: "Talk Calendar Generator", currentTime: getCurrentTime(currentDate), endTime: getCurrentTime(defaultEndDate) });
+  console.log(getCurrentTime(currentDate));
 });
 
 // Handle the form submission and generate the iCal file
 app.post('/generate-ical', upload.single('pdfFile'), (req, res) => {
-  const { title, speaker, datetime, venue, affiliation, host, description, remark } = req.body;
+  const { title, speaker, starttime, endtime, venue, affiliation, host, description, remark } = req.body;
   const pdfFile = req.file; // Use req.file to access the uploaded file
 
   // Convert the datetime string to a JavaScript Date object
-  const date = new Date(datetime);
-  date.setTime( date.getTime() - date.getTimezoneOffset()*60*1000 );
+  const startDate = new Date(starttime);
+  const endDate = new Date(endtime);
+  startDate.setTime( startDate.getTime() - startDate.getTimezoneOffset()*60*1000 );
+  endDate.setTime( endDate.getTime() - endDate.getTimezoneOffset()*60*1000 );
+  console.log(formatDate(startDate));
+  console.log(formatDate(endDate));
 
   // Create the iCalendar data
-  let icsData = `BEGIN:VCALENDAR
+  let icsPre =`BEGIN:VCALENDAR
 PRODID: -//Van Abel//talk-calendar//EN
 VERSION:2.0
 CALSCALE:GREGORIAN
@@ -54,12 +65,13 @@ TZOFFSETFROM:+0800
 TZOFFSETTO:+0800
 DTSTART:19700101T000000
 END:STANDARD
-END:VTIMEZONE
-BEGIN:VEVENT
+END:VTIMEZONE`;
+
+  let icsData = `BEGIN:VEVENT
 DTSTAMP:${getTimestamp()}
 UID:${generateUID()}
-DTSTART;TZID=Asia/Shanghai:${formatDate(date)}
-DTEND;TZID=Asia/Shanghai:${formatDate(getEndTime(date))}
+DTSTART;TZID=Asia/Shanghai:${formatDate(startDate)}
+DTEND;TZID=Asia/Shanghai:${formatDate(endDate)}
 SUMMARY:${title}
 URL:${remark}
 DESCRIPTION:Speaker: ${speaker}\\nAffiliation: ${affiliation}\\nHost: ${host}\\nAbstract: ${description}\\n
@@ -79,28 +91,39 @@ END:VALARM`;
     const fileURL = baseURL + '/uploads/' + fileName;
     // const pdfData = fs.readFileSync(pdfFile.path).toString('base64');
     //icsData += `
-//ATTACH;FMTTYPE=application/pdf;ENCODING=BASE64:${pdfData}
-//    `;
+    //ATTACH;FMTTYPE=application/pdf;ENCODING=BASE64:${pdfData}
+    //    `;
     const pdfData = fileURL;
     icsData += `
 ATTACH:${pdfData}`;
   }
-  icsData += `
-END:VEVENT
-END:VCALENDAR`;
+  icsData += `END:VEVENT`;
+  let icsPost =`END:VCALENDAR`;
 
   // Set the filename as `${title}.ics`
   const filename = `${title}.ics`;
 
   // Save the .ics file with the dynamic filename
-  fs.writeFile(filename, icsData, (err) => {
+  fs.writeFile(filename, icsPre + icsData + icsPost, (err) => {
     if (err) {
       res.status(500).send('Error while generating iCal file');
     } else {
-      res.download(filename, filename);
+      res.download(filename, filename, (err) => {
+	if (err) {
+	  console.error('Error while sending the file for download:', err);
+	} else {
+	  // The file has been successfully downloaded, so it's safe to delete it.
+	  fs.unlink(filename, (err) => {
+	    if (err) {
+	      console.error('Error deleting the temporary iCal file:', err);
+	    }
+	  });
+	}
+      });
     }
   });
 });
+
 
 
 // Helper function to format the date in the iCalendar format
@@ -131,6 +154,16 @@ function getTimestamp() {
   const minutes = now.getUTCMinutes().toString().padStart(2, '0');
   const seconds = now.getUTCSeconds().toString().padStart(2, '0');
   return `${year}${month}${day}T${hours}${minutes}${seconds}Z`;
+}
+
+function getCurrentTime(date) {
+  const currentDate = new Date(date);
+  const currentYear = currentDate.getFullYear();
+  const currentMonth = String(currentDate.getMonth() + 1).padStart(2, '0'); // Month is 0-based, so add 1 and format.
+  const currentDay = String(currentDate.getDate()).padStart(2, '0');
+  const currentHour = String(currentDate.getHours()).padStart(2, '0');
+  const currentMinute = String(currentDate.getMinutes()).padStart(2, '0');
+  return  `${currentYear}-${currentMonth}-${currentDay}T${currentHour}:${currentMinute}`;
 }
 
 // Helper function to generate a unique UID for the event
